@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referral Link Generator (Input Field)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS remains the same as the provided "MUI Font" + Input version */
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #fafafa;
+            color: #333;
+        }
+
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .controls-container {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        label {
+            font-weight: 500;
+            margin-right: 5px;
+        }
+
+        input#refCodeInput {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            min-width: 250px;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        ::placeholder { color: #aaa; opacity: 1; }
+        :-ms-input-placeholder { color: #aaa; }
+        ::-ms-input-placeholder { color: #aaa; }
+
+
+        .custom-url-toggle {
+             margin-bottom: 15px;
+             text-align: center;
+        }
+         .custom-url-toggle button {
+            padding: 8px 16px;
+            font-family: inherit;
+            font-weight: 500;
+            background-color: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+         .custom-url-toggle button:hover {
+            background-color: #d5d5d5;
+        }
+
+        .custom-url-section {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 30px;
+            display: none;
+        }
+        .custom-url-section label {
+            display: block;
+            margin-bottom: 8px;
+        }
+        .custom-url-section textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: monospace;
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+        .custom-url-section p {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 0;
+        }
+
+        ul#linkList {
+            list-style: none;
+            padding: 0;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            margin-top: 20px;
+            min-height: 50px;
+        }
+        li {
+            margin-bottom: 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+             transition: background-color 0.3s ease;
+        }
+        li:last-child {
+            border-bottom: none;
+        }
+        li.message-item { /* For messages like 'no URLs found' */
+            font-style: italic;
+            color: #666;
+            padding: 10px 8px;
+            border-bottom: none;
+        }
+
+        a {
+            color: #1976d2;
+            text-decoration: none;
+            word-break: break-all;
+            display: block;
+            padding: 4px 8px;
+        }
+        a:hover {
+            text-decoration: underline;
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+
+        li.visited-link {
+            background-color: #e0f2f1;
+            border-left: 4px solid #00796b;
+        }
+        li.visited-link a {
+             color: #00796b;
+             font-weight: 500;
+        }
+        li.visited-link a:hover {
+             background-color: transparent;
+             text-decoration: none;
+        }
+
+
+        @media (max-width: 600px) {
+            .controls-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            label {
+                margin-bottom: 5px;
+            }
+            input#refCodeInput {
+                width: 100%;
+                box-sizing: border-box;
+                min-width: unset;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Layer3 Referral Link Generator</h1>
+
+    <div class="controls-container">
+        <label for="refCodeInput">Referral Code:</label>
+        <input type="text" id="refCodeInput" placeholder="Enter 0x... code to append">
+    </div>
+
+    <div class="custom-url-toggle">
+        <button id="toggleCustomUrlButton">Customize URL List</button>
+    </div>
+
+    <div id="customUrlContainer" class="custom-url-section">
+        <label for="customUrls">Custom URLs (one per line):</label>
+        <textarea id="customUrls" placeholder="Paste your URLs here..."></textarea>
+        <p>Example: https://app.layer3.xyz/quests/example-quest</p>
+    </div>
+
+    <ul id="linkList">
+         </ul>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // ***** MODIFIED: Truncated defaultBaseUrls array *****
+            const defaultBaseUrls = [
+                "https://app.layer3.xyz/quests/cubes-on-soneium",
+                "https://app.layer3.xyz/quests/superchain-enjoyeers-layer3",
+                "https://app.layer3.xyz/quests/soneium-ogs-welcome",
+                "https://app.layer3.xyz/quests/soneium-ogs-nfts",
+                "https://app.layer3.xyz/quests/soneium-ogs-sonex",
+                "https://app.layer3.xyz/quests/soneium-badge-sake-finance",
+                "https://app.layer3.xyz/quests/soneium-ecosystem-badges-untitled-bank",
+                "https://app.layer3.xyz/quests/soneium-ogs-sonus",
+                "https://app.layer3.xyz/quests/soneium-ogs-kyo",
+                "https://app.layer3.xyz/quests/soneium-ogs-sonefi",
+                "https://app.layer3.xyz/quests/soneium-ogs-quickswap",
+                "https://app.layer3.xyz/quests/soneium-untitled-bank",
+                "https://app.layer3.xyz/quests/soneium-ogs-layer3" // Last item to include
+             ];
+            // ***** END MODIFICATION *****
+
+
+            const refCodeInput = document.getElementById('refCodeInput');
+            const linkList = document.getElementById('linkList');
+            const toggleCustomUrlButton = document.getElementById('toggleCustomUrlButton');
+            const customUrlContainer = document.getElementById('customUrlContainer');
+            const customUrlsTextArea = document.getElementById('customUrls');
+
+            // --- Helper Functions ---
+            function toggleCustomUrlSection() {
+                const isHidden = customUrlContainer.style.display === 'none' || customUrlContainer.style.display === '';
+                customUrlContainer.style.display = isHidden ? 'block' : 'none';
+                toggleCustomUrlButton.textContent = isHidden ? 'Hide Custom URL List' : 'Customize URL List';
+            }
+
+            function getBaseUrlsToUse() {
+                const customUrlsText = customUrlsTextArea.value.trim();
+                const useCustomUrls = customUrlContainer.style.display !== 'none' && customUrlsText;
+                // Use filtered default list if custom is not used
+                return useCustomUrls ? customUrlsText.split('\n').map(url => url.trim()).filter(url => url) : defaultBaseUrls;
+            }
+
+            function displayListMessage(message) {
+                 linkList.innerHTML = `<li class="message-item">${message}</li>`;
+             }
+
+            function updateLinks() {
+                const refCode = refCodeInput.value.trim();
+                const urlsToUse = getBaseUrlsToUse();
+                linkList.innerHTML = ''; // Clear list
+
+                // ***** REMOVED check for empty refCode causing early return *****
+                // The list should always be generated now.
+
+                if (urlsToUse.length === 0) {
+                     displayListMessage("No base URLs found. Add some in the 'Customize' section or use the default list.");
+                     return;
+                }
+
+                // Show warning only if a code *is* entered and looks potentially invalid
+                 if (refCode && (!refCode.startsWith('0x') || refCode.length < 10)) {
+                    const warningItem = document.createElement('li');
+                    warningItem.innerHTML = `<span style="color: #ffa726; font-weight: 500; padding: 4px 8px; display: block;">Warning: Entered code "${refCode}" may not be a valid format.</span>`;
+                    linkList.appendChild(warningItem);
+                }
+
+                // Generate list items
+                urlsToUse.forEach(baseUrl => {
+                     if (baseUrl.startsWith('http://') || baseUrl.startsWith('https://')) {
+                         // ***** MODIFIED: Conditionally append refCode *****
+                        const displayUrl = refCode ? `${baseUrl}?ref=${refCode}` : baseUrl;
+                        const linkHref = displayUrl; // Href and displayed text are the same now
+                         // ***** END MODIFICATION *****
+
+                        const listItem = document.createElement('li');
+                        listItem.classList.add("generated-link-item");
+                        const link = document.createElement('a');
+                        link.href = linkHref;
+                        link.textContent = displayUrl; // Display URL (with or without ref)
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        listItem.appendChild(link);
+                        linkList.appendChild(listItem);
+                    } else {
+                         const errorItem = document.createElement('li');
+                         errorItem.innerHTML = `<span style="color: #d32f2f; font-weight: 500; padding: 4px 8px; display: block;">Skipped invalid URL: ${baseUrl}</span>`;
+                         linkList.appendChild(errorItem);
+                    }
+                });
+            }
+
+            // Handler for marking links as visited
+            function handleLinkActivation(event) {
+                if (event.target.tagName === 'A') {
+                    const listItem = event.target.closest('li.generated-link-item');
+                    if (listItem && !listItem.classList.contains('visited-link')) {
+                        listItem.classList.add('visited-link');
+                    }
+                }
+            }
+
+            // --- Event Listeners ---
+            refCodeInput.addEventListener('input', updateLinks); // Update list as user types
+            toggleCustomUrlButton.addEventListener('click', toggleCustomUrlSection);
+
+            // Update links if custom URLs are modified (optional but good UX)
+            customUrlsTextArea.addEventListener('blur', updateLinks); // Update when textarea loses focus
+             // Also update if the custom section is hidden/shown
+             // Note: We need to ensure toggleCustomUrlSection runs *before* updateLinks
+             // Let's re-add the listener to the button that calls BOTH
+             toggleCustomUrlButton.removeEventListener('click', toggleCustomUrlSection); // Remove previous
+             toggleCustomUrlButton.addEventListener('click', () => {
+                 toggleCustomUrlSection(); // Toggle visibility first
+                 updateLinks(); // Then update the list based on new state
+             });
+
+
+            // Link activation listeners
+            linkList.addEventListener('click', handleLinkActivation);
+            linkList.addEventListener('auxclick', handleLinkActivation);
+
+            // --- Initial Load ---
+            updateLinks(); // Generate list on load (will use empty refCode initially)
+
+        }); // End DOMContentLoaded
+    </script>
+
+</body>
+</html>
